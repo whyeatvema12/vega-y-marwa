@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WhyEat</title>
+<style>
+:root{
+  --naranja:#ff7a1a; --amarillo:#ffc72c; --rojo:#e2231a; --blanco:#fff; --gris:#f4f4f4; --texto:#333;
+}
+*{box-sizing:border-box; margin:0; padding:0; font-family:'Segoe UI',Arial,sans-serif;}
+body{background:var(--blanco); color:var(--texto); min-height:100vh; display:flex; flex-direction:column;}
+header{background:linear-gradient(135deg,var(--naranja),var(--amarillo)); padding:18px 16px 14px; text-align:center; position:relative;}
+header .logo{font-size:42px;}
+header h1{color:var(--rojo); font-size:28px; letter-spacing:1px; text-shadow:1px 1px 0 #fff;}
+header p{color:#fff; font-size:13px; font-style:italic; margin-top:2px;}
+main{flex:1; padding:16px; padding-bottom:80px; max-width:480px; margin:0 auto; width:100%;}
+.screen{display:none; animation:fade .25s ease;}
+.screen.active{display:block;}
+@keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+/* Bienvenida / chat */
+.chatbox{background:var(--gris); border-radius:16px; padding:16px; margin-top:10px;}
+.bubble{background:var(--naranja); color:#fff; padding:10px 14px; border-radius:14px 14px 14px 2px; margin-bottom:10px; max-width:90%;}
+.bubble.me{background:var(--amarillo); color:#333; border-radius:14px 14px 2px 14px; margin-left:auto;}
+.start-btn{display:block; width:100%; background:var(--rojo); color:#fff; border:none; padding:14px; border-radius:12px; font-size:16px; font-weight:bold; margin-top:16px; cursor:pointer;}
+
+/* Titulo de sección */
+.section-title{color:var(--rojo); font-size:22px; text-align:center; margin-bottom:12px; font-weight:bold;}
+
+/* sub-tabs alimentos */
+.subtabs{display:flex; gap:8px; margin-bottom:14px;}
+.subtab{flex:1; background:var(--gris); border:2px solid var(--naranja); color:var(--naranja); padding:8px 4px; border-radius:10px; text-align:center; font-size:12px; font-weight:bold; cursor:pointer;}
+.subtab.active{background:var(--naranja); color:#fff;}
+
+.chip-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;}
+.chip{background:var(--gris); border:2px solid #ddd; border-radius:12px; padding:12px 8px; text-align:center; cursor:pointer; font-size:14px; transition:.15s;}
+.chip .emoji{font-size:26px; display:block; margin-bottom:4px;}
+.chip.selected{background:var(--amarillo); border-color:var(--rojo); font-weight:bold;}
+
+.big-btn{display:block; width:100%; background:var(--amarillo); color:var(--rojo); border:none; padding:14px; border-radius:12px; font-size:17px; font-weight:bold; cursor:pointer; margin-top:6px;}
+.big-btn:active{transform:scale(.98);}
+
+/* Lista de recetas */
+.recipe-card{display:flex; align-items:center; gap:12px; background:var(--gris); border-radius:14px; padding:12px; margin-bottom:10px; cursor:pointer; border:2px solid transparent;}
+.recipe-card:hover{border-color:var(--naranja);}
+.recipe-card .emoji{font-size:34px;}
+.recipe-card .info{flex:1;}
+.recipe-card .info h3{font-size:15px; color:var(--rojo);}
+.recipe-card .info span{font-size:12px; color:#777;}
+
+.back-arrow{background:var(--naranja); color:#fff; border:none; width:38px; height:38px; border-radius:50%; font-size:18px; cursor:pointer; margin-bottom:10px;}
+
+.recipe-detail .emoji-big{font-size:70px; text-align:center; display:block; margin-bottom:6px;}
+.recipe-detail h2{color:var(--rojo); text-align:center; margin-bottom:4px;}
+.recipe-detail .time{text-align:center; background:var(--amarillo); display:inline-block; padding:4px 12px; border-radius:20px; font-size:13px; font-weight:bold; margin:0 auto 14px; display:block; width:fit-content;}
+.recipe-detail ol{padding-left:20px; margin-bottom:14px;}
+.recipe-detail li{margin-bottom:8px; font-size:14px;}
+.tag-list{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;}
+.tag-list span{background:var(--gris); padding:4px 10px; border-radius:20px; font-size:12px;}
+
+/* Bebidas / salsas */
+.pick-list{display:flex; flex-direction:column; gap:10px;}
+.pick-item{display:flex; align-items:center; gap:12px; background:var(--gris); border-radius:12px; padding:10px 14px; cursor:pointer; border:2px solid transparent;}
+.pick-item .emoji{font-size:26px;}
+.pick-item.selected{border-color:var(--rojo); background:var(--amarillo);}
+
+/* Nav inferior */
+nav{position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:2px solid var(--gris); display:flex; justify-content:space-around; padding:8px 0; box-shadow:0 -2px 8px rgba(0,0,0,.08);}
+nav button{background:none; border:none; display:flex; flex-direction:column; align-items:center; font-size:11px; color:#999; cursor:pointer; gap:2px;}
+nav button.active{color:var(--rojo); font-weight:bold;}
+nav button .emoji{font-size:22px;}
+
+.summary{background:var(--gris); border-radius:12px; padding:10px 14px; font-size:13px; margin-bottom:14px;}
+.summary b{color:var(--rojo);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🍔</div>
+  <h1>WhyEat</h1>
+  <p>"Tu comida es nuestra misión"</p>
+</header>
+
+<main>
+
+  <!-- PANTALLA INICIO / CHAT -->
+  <section class="screen active" id="screen-inicio">
+    <div class="chatbox">
+      <div class="bubble">¡Hola! Soy WhyEat 🍔 ¿No sabes qué comer hoy?</div>
+      <div class="bubble">Dime qué alimentos tienes o qué te gusta, y te daré opciones de recetas 🍽️</div>
+      <div class="bubble me">¡Vale, ayúdame a elegir!</div>
+    </div>
+    <button class="start-btn" onclick="goTo('comida')">Empezar a elegir comida 🍅🍗🫘</button>
+  </section>
+
+  <!-- PANTALLA COMIDA -->
+  <section class="screen" id="screen-comida">
+    <div class="section-title">Alimentos</div>
+    <div class="subtabs">
+      <div class="subtab active" data-cat="verduras" onclick="showCat('verduras')">Verduras</div>
+      <div class="subtab" data-cat="carne" onclick="showCat('carne')">Carne/Pescado</div>
+      <div class="subtab" data-cat="legumbres" onclick="showCat('legumbres')">Legumbres</div>
+    </div>
+    <div class="chip-grid" id="chip-grid"></div>
+    <button class="big-btn" onclick="crearReceta()">Crear Receta</button>
+  </section>
+
+  <!-- PANTALLA LISTADO RECETAS -->
+  <section class="screen" id="screen-listado">
+    <button class="back-arrow" onclick="goTo('comida')">←</button>
+    <div class="section-title">Opciones para ti</div>
+    <div id="lista-recetas"></div>
+  </section>
+
+  <!-- PANTALLA DETALLE RECETA -->
+  <section class="screen" id="screen-detalle">
+    <button class="back-arrow" onclick="goTo('listado')">←</button>
+    <div class="recipe-detail" id="detalle-contenido"></div>
+    <button class="big-btn" onclick="goTo('bebida')">Elegir bebida y salsa →</button>
+  </section>
+
+  <!-- PANTALLA BEBIDA -->
+  <section class="screen" id="screen-bebida">
+    <button class="back-arrow" onclick="goTo('detalle')">←</button>
+    <div class="section-title">Elige tu bebida</div>
+    <div class="pick-list" id="lista-bebidas"></div>
+    <button class="big-btn" onclick="goTo('salsas')">Siguiente →</button>
+  </section>
+
+  <!-- PANTALLA SALSAS -->
+  <section class="screen" id="screen-salsas">
+    <button class="back-arrow" onclick="goTo('bebida')">←</button>
+    <div class="section-title">Elige tu salsa</div>
+    <div class="pick-list" id="lista-salsas"></div>
+    <button class="big-btn" onclick="goTo('resumen')">Finalizar 🍔</button>
+  </section>
+
+  <!-- PANTALLA RESUMEN -->
+  <section class="screen" id="screen-resumen">
+    <div class="section-title">¡Tu pedido está listo! 🎉</div>
+    <div class="summary" id="resumen-contenido"></div>
+    <button class="big-btn" onclick="reiniciar()">Volver a empezar</button>
+  </section>
+
+</main>
+
+<nav>
+  <button data-s="comida" onclick="goTo('comida')"><span class="emoji">🍽️</span>Comida</button>
+  <button data-s="bebida" onclick="goTo('bebida')"><span class="emoji">🥤</span>Bebida</button>
+  <button data-s="salsas" onclick="goTo('salsas')"><span class="emoji">🍯</span>Salsas</button>
+</nav>
+
+<script>
+/* ---------- DATOS ---------- */
+const ingredientes = {
+  verduras: [
+    {id:'tomate', nombre:'Tomate', emoji:'🍅'},
+    {id:'lechuga', nombre:'Lechuga', emoji:'🥬'},
+    {id:'cebolla', nombre:'Cebolla', emoji:'🧅'},
+    {id:'zanahoria', nombre:'Zanahoria', emoji:'🥕'},
+    {id:'pimiento', nombre:'Pimiento', emoji:'🫑'},
+    {id:'calabacin', nombre:'Calabacín', emoji:'🥒'},
+    {id:'brocoli', nombre:'Brócoli', emoji:'🥦'},
+    {id:'patata', nombre:'Patata', emoji:'🥔'},
+  ],
+  carne: [
+    {id:'pollo', nombre:'Pollo', emoji:'🍗'},
+    {id:'ternera', nombre:'Ternera', emoji:'🥩'},
+    {id:'salmon', nombre:'Salmón', emoji:'🐟'},
+    {id:'atun', nombre:'Atún', emoji:'🐟'},
+    {id:'gambas', nombre:'Gambas', emoji:'🍤'},
+    {id:'huevo', nombre:'Huevo', emoji:'🥚'},
+  ],
+  legumbres: [
+    {id:'lentejas', nombre:'Lentejas', emoji:'🟤'},
+    {id:'garbanzos', nombre:'Garbanzos', emoji:'🟡'},
+    {id:'alubias', nombre:'Alubias', emoji:'⚪'},
+    {id:'guisantes', nombre:'Guisantes', emoji:'🟢'},
+  ]
+};
+
+const recetas = [
+  {id:'ensalada', nombre:'Ensalada fresca', emoji:'🥗', tiempo:'10 min',
+   tags:['tomate','lechuga','cebolla','zanahoria','pimiento'],
+   pasos:['Lava y corta todas las verduras que tengas.','Mézclalas en un bol grande.','Añade sal, aceite de oliva y un poco de vinagre.','Remueve bien y sirve fría.']},
+  {id:'pollo-verduras', nombre:'Pollo salteado con verduras', emoji:'🍗🥕', tiempo:'25 min',
+   tags:['pollo','pimiento','cebolla','zanahoria','calabacin'],
+   pasos:['Corta el pollo en trozos pequeños.','Saltea las verduras en una sartén con aceite.','Añade el pollo y cocina 10-12 min hasta que esté dorado.','Sazona con sal, pimienta y un poco de ajo.']},
+  {id:'salmon-brocoli', nombre:'Salmón al horno con brócoli', emoji:'🐟🥦', tiempo:'30 min',
+   tags:['salmon','brocoli','patata'],
+   pasos:['Precalienta el horno a 200°C.','Coloca el salmón y el brócoli en una bandeja con aceite.','Hornea 20 minutos.','Sirve con un toque de limón.']},
+  {id:'lentejas-guiso', nombre:'Guiso de lentejas', emoji:'🍲', tiempo:'40 min',
+   tags:['lentejas','zanahoria','cebolla','patata'],
+   pasos:['Sofríe la cebolla y la zanahoria picadas.','Añade las lentejas y cubre con agua.','Cocina a fuego medio 30 minutos.','Sazona con sal y una hoja de laurel.']},
+  {id:'tortilla', nombre:'Tortilla de patatas', emoji:'🍳', tiempo:'25 min',
+   tags:['huevo','patata','cebolla'],
+   pasos:['Corta las patatas y la cebolla en láminas finas.','Fríelas a fuego bajo hasta que estén blandas.','Bate los huevos y mézclalos con las patatas.','Cuaja la tortilla en la sartén por ambos lados.']},
+  {id:'garbanzos-salteado', nombre:'Garbanzos salteados con pimiento', emoji:'🧆', tiempo:'20 min',
+   tags:['garbanzos','pimiento','cebolla','tomate'],
+   pasos:['Sofríe cebolla y pimiento en aceite.','Añade el tomate troceado y cocina 5 min.','Incorpora los garbanzos cocidos.','Sazona con comino y sal, cocina 5 min más.']},
+  {id:'gambas-ajillo', nombre:'Gambas al ajillo', emoji:'🍤', tiempo:'15 min',
+   tags:['gambas','pimiento'],
+   pasos:['Calienta aceite con ajo laminado.','Añade las gambas y saltea 3-4 minutos.','Añade un toque de guindilla si te gusta el picante.','Sirve con pan.']},
+  {id:'ternera-guisantes', nombre:'Ternera con guisantes', emoji:'🥩🟢', tiempo:'35 min',
+   tags:['ternera','guisantes','cebolla','zanahoria'],
+   pasos:['Dora la carne en una olla con aceite.','Añade cebolla y zanahoria picadas.','Cubre con agua o caldo y cocina 25 min.','Añade los guisantes los últimos 5 minutos.']},
+  {id:'alubias-estofado', nombre:'Estofado de alubias', emoji:'🍛', tiempo:'40 min',
+   tags:['alubias','tomate','cebolla','pimiento'],
+   pasos:['Sofríe cebolla, pimiento y tomate.','Añade las alubias cocidas y un poco de agua.','Cocina a fuego lento 25 minutos.','Sazona con pimentón y sal.']},
+  {id:'atun-ensalada', nombre:'Ensalada de atún', emoji:'🥗🐟', tiempo:'10 min',
+   tags:['atun','tomate','lechuga','cebolla'],
+   pasos:['Corta la lechuga y el tomate.','Añade el atún desmenuzado y la cebolla picada.','Aliña con aceite, sal y limón.','Mezcla bien y sirve.']},
+];
+
+const bebidas = [
+  {id:'agua', nombre:'Agua', emoji:'💧'},
+  {id:'zumo', nombre:'Zumo de naranja', emoji:'🍊'},
+  {id:'limonada', nombre:'Limonada', emoji:'🍋'},
+  {id:'cola', nombre:'Refresco de cola', emoji:'🥤'},
+  {id:'te', nombre:'Té frío', emoji:'🧊'},
+  {id:'batido', nombre:'Batido de fresa', emoji:'🍓'},
+];
+
+const salsas = [
+  {id:'ketchup', nombre:'Ketchup', emoji:'🍅'},
+  {id:'mayonesa', nombre:'Mayonesa', emoji:'🥄'},
+  {id:'alioli', nombre:'Alioli', emoji:'🧄'},
+  {id:'bbq', nombre:'Barbacoa', emoji:'🔥'},
+  {id:'mostaza', nombre:'Mostaza', emoji:'🟡'},
+  {id:'yogur', nombre:'Salsa de yogur', emoji:'🥛'},
+];
+
+/* ---------- ESTADO ---------- */
+let estado = {
+  seleccion: new Set(),
+  catActual: 'verduras',
+  recetaElegida: null,
+  bebidaElegida: null,
+  salsaElegida: null,
+};
+
+/* ---------- NAVEGACIÓN ---------- */
+function goTo(pantalla){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+pantalla).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.s===pantalla));
+  if(pantalla==='comida') renderChips();
+  if(pantalla==='bebida') renderBebidas();
+  if(pantalla==='salsas') renderSalsas();
+  if(pantalla==='resumen') renderResumen();
+}
+
+/* ---------- COMIDA ---------- */
+function showCat(cat){
+  estado.catActual = cat;
+  document.querySelectorAll('.subtab').forEach(t=>t.classList.toggle('active', t.dataset.cat===cat));
+  renderChips();
+}
+function renderChips(){
+  const grid = document.getElementById('chip-grid');
+  grid.innerHTML = '';
+  ingredientes[estado.catActual].forEach(ing=>{
+    const div = document.createElement('div');
+    div.className = 'chip' + (estado.seleccion.has(ing.id) ? ' selected' : '');
+    div.innerHTML = `<span class="emoji">${ing.emoji}</span>${ing.nombre}`;
+    div.onclick = ()=>{
+      if(estado.seleccion.has(ing.id)) estado.seleccion.delete(ing.id);
+      else estado.seleccion.add(ing.id);
+      renderChips();
+    };
+    grid.appendChild(div);
+  });
+}
+
+function crearReceta(){
+  const sel = estado.seleccion;
+  let candidatas = recetas.map(r=>{
+    const score = r.tags.filter(t=>sel.has(t)).length;
+    return {...r, score};
+  });
+  if(sel.size>0){
+    candidatas = candidatas.filter(r=>r.score>0).sort((a,b)=>b.score-a.score);
+  }
+  if(candidatas.length===0) candidatas = recetas;
+  const cont = document.getElementById('lista-recetas');
+  cont.innerHTML = '';
+  candidatas.forEach(r=>{
+    const div = document.createElement('div');
+    div.className = 'recipe-card';
+    div.innerHTML = `<span class="emoji">${r.emoji}</span><div class="info"><h3>${r.nombre}</h3><span>⏱ ${r.tiempo}</span></div>`;
+    div.onclick = ()=>verReceta(r.id);
+    cont.appendChild(div);
+  });
+  goTo('listado');
+}
+
+function verReceta(id){
+  const r = recetas.find(x=>x.id===id);
+  estado.recetaElegida = r;
+  const cont = document.getElementById('detalle-contenido');
+  cont.innerHTML = `
+    <span class="emoji-big">${r.emoji}</span>
+    <h2>${r.nombre}</h2>
+    <span class="time">⏱ ${r.tiempo}</span>
+    <div class="tag-list">${r.tags.map(t=>`<span>${buscarNombre(t)}</span>`).join('')}</div>
+    <ol>${r.pasos.map(p=>`<li>${p}</li>`).join('')}</ol>
+  `;
+  goTo('detalle');
+}
+function buscarNombre(id){
+  for(const cat in ingredientes){
+    const found = ingredientes[cat].find(i=>i.id===id);
+    if(found) return found.emoji+' '+found.nombre;
+  }
+  return id;
+}
+
+/* ---------- BEBIDAS / SALSAS ---------- */
+function renderBebidas(){
+  const cont = document.getElementById('lista-bebidas');
+  cont.innerHTML = '';
+  bebidas.forEach(b=>{
+    const div = document.createElement('div');
+    div.className = 'pick-item' + (estado.bebidaElegida===b.id ? ' selected':'');
+    div.innerHTML = `<span class="emoji">${b.emoji}</span>${b.nombre}`;
+    div.onclick = ()=>{ estado.bebidaElegida=b.id; renderBebidas(); };
+    cont.appendChild(div);
+  });
+}
+function renderSalsas(){
+  const cont = document.getElementById('lista-salsas');
+  cont.innerHTML = '';
+  salsas.forEach(s=>{
+    const div = document.createElement('div');
+    div.className = 'pick-item' + (estado.salsaElegida===s.id ? ' selected':'');
+    div.innerHTML = `<span class="emoji">${s.emoji}</span>${s.nombre}`;
+    div.onclick = ()=>{ estado.salsaElegida=s.id; renderSalsas(); };
+    cont.appendChild(div);
+  });
+}
+
+/* ---------- RESUMEN ---------- */
+function renderResumen(){
+  const r = estado.recetaElegida;
+  const b = bebidas.find(x=>x.id===estado.bebidaElegida);
+  const s = salsas.find(x=>x.id===estado.salsaElegida);
+  document.getElementById('resumen-contenido').innerHTML = `
+    <p>🍽️ <b>Comida:</b> ${r ? r.emoji+' '+r.nombre : 'Sin elegir'}</p>
+    <p>🥤 <b>Bebida:</b> ${b ? b.emoji+' '+b.nombre : 'Sin elegir'}</p>
+    <p>🍯 <b>Salsa:</b> ${s ? s.emoji+' '+s.nombre : 'Sin elegir'}</p>
+    <p style="margin-top:8px;">¡Buen provecho! 😋</p>
+  `;
+}
+
+function reiniciar(){
+  estado = {seleccion:new Set(), catActual:'verduras', recetaElegida:null, bebidaElegida:null, salsaElegida:null};
+  goTo('comida');
+}
+
+/* Init */
+renderChips();
+</script>
+
+</body>
+</html>
